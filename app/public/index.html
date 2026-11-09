@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lunzer · Booth to booth, without reading the map</title>
+  <meta name="description" content="Lunzer draws the shortest walkable route between where you are and where you're going inside a conference hall, stair-free when you need it.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <link rel="preload" href="/fonts/barlow-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="sym-start" viewBox="0 0 24 24"><path d="M12 3 21.5 20h-19Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+      <symbol id="sym-control" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.2"/></symbol>
+      <symbol id="sym-finish" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    </defs>
+  </svg>
+
+  <header class="topbar">
+    <a class="wordmark" href="/" aria-label="Lunzer home">
+      <svg class="wordmark-course" viewBox="0 0 64 20" aria-hidden="true">
+        <path d="M7 3 13 15H1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M15 10h32" stroke="var(--course)" stroke-width="2.4"/>
+        <circle cx="55" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="55" cy="10" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <span>Lunzer</span>
+    </a>
+    <p class="topbar-meta">Cloud Native Hackathon · 9 Nov 2026 · team {{TEAM}}</p>
+  </header>
+
+  <main>
+    <section class="stage" aria-labelledby="hero-title">
+      <div class="map-frame">
+        <div class="map-titleblock">
+          <span class="map-name">Expo floor · Halls 1–5, A–C</span>
+          <button type="button" id="zoom-toggle" class="btn-ghost" aria-pressed="false">Whole floor</button>
+        </div>
+        <svg id="map" class="map" role="img" aria-labelledby="map-label" preserveAspectRatio="xMidYMid meet">
+          <title id="map-label">Expo floor map with your route</title>
+        </svg>
+        <div class="map-legend" aria-label="Map key">
+          <span><i class="k k-floor"></i>Walkway</span>
+          <span><i class="k k-booth"></i>Booth</span>
+          <span><i class="k k-block"></i>Seating, stage or service</span>
+          <span><i class="k k-wall"></i>Hall edge</span>
+          <span><i class="k k-route"></i>Your route</span>
+        </div>
+        <p class="map-source">Floor plan and exhibitors from the public KubeCon + CloudNativeCon North America 2026 expo map. Positions are approximate. Lunzer is a hackathon project, not affiliated with the event.</p>
+      </div>
+
+      <aside class="margin">
+        <h1 id="hero-title">Booth to booth, without reading the map.</h1>
+        <p class="lede">Say where you are and where you're going. Lunzer draws the shortest walkable route, stair-free when you need it.</p>
+
+        <form id="route-form" class="route-form" autocomplete="off" novalidate>
+          <div class="field">
+            <label for="from-input"><svg class="sym" aria-hidden="true"><use href="#sym-start"/></svg>You are near</label>
+            <div class="combo">
+              <input id="from-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="from-list" placeholder="Booth number, exhibitor or landmark" spellcheck="false">
+              <ul id="from-list" class="combo-list" role="listbox" hidden></ul>
+            </div>
+          </div>
+          <div class="field">
+            <label for="to-input"><svg class="sym" aria-hidden="true"><use href="#sym-finish"/></svg>Take me to</label>
+            <div class="combo">
+              <input id="to-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="to-list" placeholder="Exhibitor name or booth number" spellcheck="false">
+              <ul id="to-list" class="combo-list" role="listbox" hidden></ul>
+            </div>
+          </div>
+          <fieldset class="needs">
+            <legend>Accessibility</legend>
+            <label class="toggle"><input type="checkbox" id="wheelchair"><span>Wheelchair route</span><small>Favours wide aisles, avoids tight gaps</small></label>
+            <label class="toggle"><input type="checkbox" id="nostairs"><span>No stairs</span><small>Ramps, lifts and level floor only</small></label>
+          </fieldset>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Find route</button>
+            <label class="toggle toggle-inline"><input type="checkbox" id="focus" checked><span>Show only my route</span></label>
+          </div>
+          <p id="form-error" class="form-error" role="alert" hidden></p>
+        </form>
+
+        <section class="sheet" aria-labelledby="sheet-title">
+          <div class="sheet-head">
+            <h2 id="sheet-title">Directions</h2>
+            <p id="route-summary" class="route-summary" aria-live="polite"></p>
+          </div>
+          <ol id="steps" class="steps"></ol>
+        </section>
+      </aside>
+    </section>
+
+    <section class="problem" aria-labelledby="problem-title">
+      <h2 id="problem-title">Twenty trips a day, three questions each time.</h2>
+      <ol class="course-strip">
+        <li><svg class="sym-lg" aria-hidden="true"><use href="#sym-start"/></svg><strong>Where am I?</strong><span>Find yourself on a map you've never seen, in a hall where every aisle looks the same.</span></li>
+        <li><svg class="sym-lg" aria-hidden="true"><use href="#sym-control"/></svg><strong>Where is it?</strong><span>Turn a vendor's name into a booth number, then a booth number into a spot on the map.</span></li>
+        <li><svg class="sym-lg" aria-hidden="true"><use href="#sym-finish"/></svg><strong>What's the best way?</strong><span>Plan a route around walls and booths, and around stairs if you use a wheelchair.</span></li>
+      </ol>
+      <p class="problem-close">Once or twice a day, that's fine. Twenty to thirty times a conference day, it eats the working memory you came to spend on conversations. Lunzer answers all three in one step.</p>
+    </section>
+
+    <section class="modes" aria-labelledby="modes-title">
+      <h2 id="modes-title">Two ways to start.</h2>
+      <div class="halves">
+        <article class="half half-built">
+          <h3>Type where you are</h3>
+          <p>Works in the demo above, on this year's expo floor. Enter a booth number, an exhibitor or a landmark like "coffee bar". Pick a destination and any accessibility needs. Lunzer finds the route and strips the map down to what's on it.</p>
+          <ul class="facts">
+            <li>Typo-tolerant search over 237 booths and their exhibitors</li>
+            <li>Routes never cut through booths, seating or stages</li>
+            <li>Wheelchair routes that keep to wide aisles</li>
+          </ul>
+        </article>
+        <article class="half half-planned">
+          <h3>Let your phone find you</h3>
+          <p>Planned, not built yet. Open Lunzer and allow Bluetooth. Beacons in the hall place you on the map, so you only choose where to go. Press GO and follow live directions that update as you walk, until you arrive.</p>
+          <ul class="facts">
+            <li>Bluetooth beacon positioning</li>
+            <li>Live, turn-by-turn navigation</li>
+            <li>Elasticsearch-backed search across the event's exhibitor list</li>
+          </ul>
+          <button type="button" class="btn-go" disabled aria-describedby="go-note">GO</button>
+          <p id="go-note" class="go-note">Live navigation isn't built yet.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="access" aria-labelledby="access-title">
+      <h2 id="access-title">Stair-free is a route, not a footnote.</h2>
+      <p>This expo floor is level, so every route here is step-free. Turn on <em>Wheelchair route</em> and Lunzer keeps to wide aisles and stays out of tight gaps between seating and stands. Venues with stairs and lifts get a separate step-free course on the same map. Orienteering has a whole discipline, Trail-O, built so wheelchair users read the same map as everyone else. Lunzer takes the same stance: an accessible route is planned on the same map, with the same care.</p>
+    </section>
+
+    <section class="status-sheet" aria-labelledby="status-title">
+      <h2 id="status-title">Built today, and what's next.</h2>
+      <div class="status-cols">
+        <div>
+          <h3><span class="line line-solid" aria-hidden="true"></span>Built</h3>
+          <ul>
+            <li>Shortest-path routing on a walkable grid</li>
+            <li>Wheelchair routes that keep to wide aisles</li>
+            <li>Route-only view that hides everything off your route</li>
+            <li>The real expo floor, 237 booths and the exhibitor directory, converted from the public map</li>
+            <li>Installable web app shell, deployed by GitOps</li>
+          </ul>
+        </div>
+        <div>
+          <h3><span class="line line-dashed" aria-hidden="true"></span>Planned</h3>
+          <ul>
+            <li>Bluetooth positioning and live GO navigation</li>
+            <li>Elasticsearch search over every event's exhibitor list</li>
+            <li>Multiple floors with stairs, lifts and ramps</li>
+            <li>Walk-plus-shuttle routes between buildings</li>
+            <li>Native iOS and Android apps</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Lunzer · team {{TEAM}} · Cloud Native Hackathon 2026</p>
+    <p>Map data from the public KubeCon + CloudNativeCon NA 2026 expo map; not affiliated. Version <code>{{VERSION}}</code></p>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

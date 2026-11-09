@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T00:00:00Z",
+  "title": "Design System: Lunzer",
+  "extensions": {
+    "colorMeta": {
+      "course": { "role": "primary", "displayName": "Course Magenta", "canonical": "#b0106b" },
+      "floor": { "role": "secondary", "displayName": "Paved Tan", "canonical": "#f0e2c4" },
+      "booth": { "role": "secondary", "displayName": "Booth Grey", "canonical": "#bcbcbc" },
+      "water": { "role": "secondary", "displayName": "Water Blue", "canonical": "#1f86cf" },
+      "plant": { "role": "secondary", "displayName": "Planter Green", "canonical": "#3c9e45" },
+      "open": { "role": "secondary", "displayName": "Open Lounge Yellow", "canonical": "#ffd23f" },
+      "oob": { "role": "secondary", "displayName": "Out-of-Bounds Olive", "canonical": "#a99f35" },
+      "ramp": { "role": "secondary", "displayName": "Ramp Brown", "canonical": "#8f5f2e" },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff" },
+      "ink": { "role": "neutral", "displayName": "Map Black", "canonical": "#161616" },
+      "ink-soft": { "role": "neutral", "displayName": "Soft Ink", "canonical": "#464646" },
+      "booth-dim": { "role": "neutral", "displayName": "Faded Booth", "canonical": "#e6e2d9" },
+      "rule-soft": { "role": "neutral", "displayName": "Soft Rule", "canonical": "#d4cdbd" }
+    },
+    "typographyMeta": {
+      "display-xl": { "displayName": "Display XL", "purpose": "Section headlines, uppercase." },
+      "display-hero": { "displayName": "Display Hero", "purpose": "First-viewport headline in the legend margin." },
+      "heading": { "displayName": "Heading", "purpose": "Sheet titles and map name, uppercase." },
+      "label": { "displayName": "Label", "purpose": "Field labels, codes, distances, buttons; uppercase condensed." },
+      "body": { "displayName": "Body", "purpose": "Reading text, tabular numerals." },
+      "body-lg": { "displayName": "Body Large", "purpose": "Standalone section paragraphs." },
+      "note": { "displayName": "Note", "purpose": "Legend text, step notes, helper text in Soft Ink." }
+    },
+    "shadows": [
+      { "name": "dropdown", "value": "0 10px 24px -8px rgb(22 22 22 / 0.28)", "purpose": "Open combobox list only." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "All state transitions and control-circle landing." },
+      { "name": "state", "value": "160ms", "purpose": "Button and toggle transitions." },
+      { "name": "map-focus", "value": "260ms", "purpose": "Booth fade when a course focuses the map." },
+      { "name": "control-land", "value": "380ms", "purpose": "Control circle lands from scale 1.8 to 1." },
+      { "name": "course-draw", "value": "min(1400ms, 500ms + length * 0.9) linear", "purpose": "Course legs draw in sequence by stroke-dashoffset; static under reduced motion." }
+    ],
+    "breakpoints": [
+      { "name": "stack", "value": "960px" },
+      { "name": "phone", "value": "720px" }
+    ],
+    "rules": [
+      "The Magenta Is The Route Rule: Course Magenta appears only on the course.",
+      "The Legend Rule: every ink is a named map-key entry.",
+      "The Provenance Line Rule: built is solid, planned is dashed.",
+      "The Ruled Sheet Rule: lists are 1px black ruled rows, never cards.",
+      "The Tabular Rule: tabular numerals everywhere.",
+      "The Course Draws Itself Rule: legs draw, controls land; static under reduced motion."
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action (Find route). Inverts on hover.",
+      "html": "<button class=\"ds-btn\">Find route</button>",
+      "css": ".ds-btn { height: 50px; padding: 0 28px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 1.25rem; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; background: #161616; border: 2px solid #161616; border-radius: 0; cursor: pointer; transition: background-color 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-btn:hover { background: #fff; color: #161616; } .ds-btn:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Planned Button",
+      "kind": "button",
+      "refersTo": "button-planned",
+      "description": "Disabled control for a feature not yet built; dashed per provenance rule.",
+      "html": "<button class=\"ds-go\" disabled>GO</button>",
+      "css": ".ds-go { height: 50px; padding: 0 40px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 1.25rem; letter-spacing: 0.06em; text-transform: uppercase; background: #fff; color: #464646; border: 2px dashed #464646; border-radius: 0; cursor: not-allowed; }"
+    },
+    {
+      "name": "Combobox Input",
+      "kind": "input",
+      "refersTo": "input-combobox",
+      "description": "From/To place search; yellow focus ring, dashed when invalid.",
+      "html": "<input class=\"ds-input\" placeholder=\"Booth, vendor or landmark\">",
+      "css": ".ds-input { width: 100%; height: 48px; padding: 0 14px; font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif; font-size: 1.05rem; color: #161616; background: #fff; border: 2px solid #161616; border-radius: 0; appearance: none; } .ds-input:focus-visible { outline: 3px solid #ffd23f; outline-offset: 0; } .ds-input[aria-invalid='true'] { border-style: dashed; }"
+    },
+    {
+      "name": "Toggle",
+      "kind": "custom",
+      "refersTo": "toggle-box",
+      "description": "Square checkbox toggle for Wheelchair / No stairs.",
+      "html": "<label class=\"ds-toggle\"><input type=\"checkbox\" checked><span>Wheelchair</span></label>",
+      "css": ".ds-toggle { display: grid; grid-template-columns: 22px 1fr; column-gap: 10px; align-items: center; font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif; } .ds-toggle span { font-weight: 700; } .ds-toggle input { appearance: none; width: 22px; height: 22px; margin: 0; border: 2px solid #161616; background: #fff; display: grid; place-content: center; } .ds-toggle input::after { content: ''; width: 10px; height: 10px; background: #161616; transform: scale(0); transition: transform 160ms cubic-bezier(0.16,1,0.3,1); } .ds-toggle input:checked::after { transform: scale(1); }"
+    }
+  ]
+}

@@ -1,0 +1,233 @@
+ActiveState|277
+Actualyze AI|364
+Adaptive6|243
+AEnix|305
+Aikido Security|273
+Aiven|336
+Akamai|132
+Akamas|215
+Akeyless Security|220
+Akuity|165
+Amazon Web Services|115
+Amutable|347
+Antithesis|244
+Anyscale|317
+Apollo GraphQL|267
+Aranya|369
+Archestra AI|361
+Arpio|213
+Ascend|362
+Ascendra Networks|355
+Attribute by DoiT|236
+Better Stack|228
+Bindplane|253
+Black Duck|257
+Blacksmith|272
+CAMARA Project|321
+Canonical|128
+Cast AI|119
+Causal Dynamics Lab|372
+Causely|354
+Chainguard|110
+CIQ|326
+Ciroos|248
+ClickHouse|108
+Cloud Native Studios|337,338,339
+CloudBees|269
+Cloudchipr|331
+Cloudsmith|175
+Cockroach Labs|234
+Coder|195
+ControlTheory|188
+Coralogix|316
+CoreWeave|147
+Cosmonic|224
+Couchbase|149
+Crash Override|211
+Cribl|205
+Crusoe|104
+CVS Health|359
+Dash0|134
+DataAgent|268
+Databricks|314
+DataCore|289
+Datadog|152
+Decimal AI|239
+Depot|320
+DevZero|169
+Diagrid|193
+Digital.ai|251
+Docker|141
+DragonflyDB|209
+Dynatrace|184
+Echo|144
+Edera|226
+Edge Delta|246
+Effodio|375
+Elastic|196
+Emphere|357
+empirik|327
+Endor Labs|311
+EnterpriseDB|280
+Everbridge xMatters|249
+F5|100
+Faros|299
+Fastly|247
+Firefly|204
+Flox|233
+FluidCloud|353
+Framework|219
+FusionAuth|252
+Google Cloud|122
+Grafana Labs|214
+Gravitee|160
+Gremlin|265
+Grepr|291
+Greptime|262
+groundcover|111
+HAProxy Technologies|124
+Harness|154
+HashiCorp, an IBM Company|225
+HeroDevs|245
+Heroku|166
+Honeycomb|203
+HPE|145,151
+IBM|172
+IBM Kubecost|182
+Incident.io|235
+Infino AI|368
+Infisical|113
+InfrOS|360
+Intuit|157
+IOWN Global Forum|275
+Isovalent at Cisco|112
+JetBrains|319
+Jozu|260
+Kedify|358
+Klique|276
+KodeKloud|296
+Komodor|185
+Kong|155
+KubeDB|330
+Kubermatic|229
+Kubex|206
+Lablup Inc.|216
+Latitude.sh|318
+LINBIT|301
+Linux Foundation Education|140
+LiveKit|254
+MacStadium|255
+Maze|333
+Mezmo|210
+Microsoft Azure|117
+Mirantis|232
+mirrord by MetalBear|352
+Momentic|279
+MyDecisive|374
+Myota|304
+Nebius|133
+NetLOX|297
+NeuBird|282
+New Orleans CVB|306
+New Relic|159
+Nirmata|278
+North|307
+NorthMark Compute and Cloud|286
+Nutanix|118
+NVIDIA|170
+Obot AI|323
+Octopus Deploy|174
+OllyGarden|356
+Omnistrate|342
+Open Source Security Foundation (OpenSSF)|313
+OpenObserve|167
+OpenSearch|180
+Oracle|120
+Orca Security|325
+PagerDuty|201
+Palo Alto Networks|181
+Paper Compute Company|371
+PatapscoAI|373
+Percona|242
+PerfectScale by DoiT|131
+pganalyze|324
+pgEdge|366
+Plakar|341
+PlanetScale|259
+Plural|192
+Port|109
+Portainer|250
+Portworx by Everpure|191
+Postman|130
+ProsperOps|263
+Pulumi|200
+Pump|287
+Qualcomm|288
+Radar|365
+Rafay Systems|238
+RapidFort|310
+RavenDB|315
+Red Hat|116
+Redpanda Data|199
+Replicated|194
+Resolve AI|161
+Robusta.dev|274
+Rootly AI|340
+Runpod|292
+ScaleOps|123
+Sedai|163
+Sentry|217
+Sigi|266
+SigNoz|198
+Snowflake|300
+Solo.io|121
+Sonatype|208
+Sonrai Security|212
+Spacelift|202
+Spectro Cloud|125
+Splunk, a Cisco Company|105
+Spotify|293
+SquaredUp|295
+StackGen|283
+StackGuardian|332
+Stacklet|322
+Stacklok|346
+StormForge by CloudBolt|207
+Supabase|227
+SUSE|107
+Syntasso|281
+Sysdig|168
+Tailscale|189
+Talos by Sidero Labs|126
+Techstrong|197
+Teleport|103
+Temporal|171
+Tensormesh|343
+Testkube|363
+TFiR|148
+The New Stack|156
+theCube|146
+Tigera|150
+Tigris Data|221
+Tintri|106
+Traefik Labs|290
+Traversal|138
+TrueFoundry|298
+Twingate|256
+Uber|312
+Upbound|258
+Varnish Software|294
+VAST Data|231
+VATES|264
+vCluster|164
+Veeam|187
+VictoriaMetrics|218
+Vijil|370
+VillageSQL|367
+VMware by Broadcom|129
+Vultr|186
+Wiz|179
+Xata|237
+Yugabyte|153
+ZEDEDA|230
+Zesty|178

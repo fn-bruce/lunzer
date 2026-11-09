@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "app/public/index.html"
+        ],
+        "createdAt": "2026-11-09T19:04:29.716Z",
+        "reason": "agent: flagged wrappers are full-bleed section dividers and the How A/B frame; their text sits 24-112px inside, verified in desktop/mobile screenshots"
+      },
+      {
+        "rule": "repeating-gradient",
+        "value": "*",
+        "files": [
+          "app/public/index.html"
+        ],
+        "createdAt": "2026-11-09T19:04:39.421Z",
+        "reason": "agent: stripes are map-key swatches for stairs and no-access hatching, matching the SVG map patterns"
+      }
+    ]
+  }
+}
