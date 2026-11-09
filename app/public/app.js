@@ -127,11 +127,33 @@
       out.push(path[j]);
       i = j;
     }
-    // Merge turn points that sit almost on top of each other.
-    for (let k = 1; k < out.length - 1; ) {
-      const a = out[k - 1], b = out[k];
-      if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 4.5 && lineClear(a, out[k + 1], o)) out.splice(k, 1);
-      else k++;
+    // String-pull: drop any turn point whose neighbours can see each other.
+    for (let changed = true; changed; ) {
+      changed = false;
+      for (let k = 1; k < out.length - 1; ) {
+        if (lineClear(out[k - 1], out[k + 1], o)) { out.splice(k, 1); changed = true; }
+        else k++;
+      }
+    }
+    return out;
+  }
+
+  // Turn points worth a numbered control: a real change of direction, far
+  // enough from the previous control and from the finish to read on the map.
+  function controlsOf(pts) {
+    const MIN_GAP = 28, MIN_TURN = 22;
+    const out = [];
+    let last = pts[0];
+    for (let i = 1; i < pts.length - 1; i++) {
+      const d1 = [pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]];
+      const d2 = [pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]];
+      const ang = Math.abs((Math.atan2(d1[0] * d2[1] - d1[1] * d2[0], d1[0] * d2[0] + d1[1] * d2[1]) * 180) / Math.PI);
+      const end = pts[pts.length - 1];
+      if (ang < MIN_TURN) continue;
+      if (Math.hypot(pts[i][0] - last[0], pts[i][1] - last[1]) < MIN_GAP) continue;
+      if (Math.hypot(pts[i][0] - end[0], pts[i][1] - end[1]) < MIN_GAP) continue;
+      out.push(i);
+      last = pts[i];
     }
     return out;
   }
@@ -146,7 +168,7 @@
     const pts = cells.map(([i, j]) => toPt(i, j));
     let len = 0;
     for (let k = 1; k < pts.length; k++) len += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
-    return { pts, metres: Math.round(len * M_PER_UNIT) };
+    return { pts, controls: controlsOf(pts), metres: Math.round(len * M_PER_UNIT) };
   }
 
   // ---------- Places ----------
@@ -157,6 +179,7 @@
   const booths = venue.booths.map((b) => ({
     id: 'b' + b.num, kind: 'booth', num: b.num, poly: b.poly, level: b.level,
     names: namesByBooth.get(b.num) || [], anchor: b.poly ? centroid(b.poly) : [b.x, b.y], labelAt: [b.x, b.y],
+    fit: b.poly ? 0.65 * Math.min(...[0, 1].map((k) => Math.max(...b.poly.map((q) => q[k])) - Math.min(...b.poly.map((q) => q[k])))) : 6,
   }));
   const L = (id, name, x, y, terms, show) => ({ id, kind: 'landmark', name, anchor: [x, y], terms, show });
   const landmarks = [
@@ -221,11 +244,17 @@
   }
 
   function directions(r, from, to) {
-    const { pts } = r;
-    const legM = (i) => Math.round(Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]) * M_PER_UNIT);
+    const { pts, controls } = r;
     if (pts.length < 2) return [{ mark: 'finish', text: `You're already at ${placeLabel(to)}.` }];
+    // Legs run start → controls → finish; bends between controls are walked through.
+    const stops = [0, ...controls, pts.length - 1];
+    const legM = (k) => {
+      let d = 0;
+      for (let i = stops[k]; i < stops[k + 1]; i++) d += Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+      return Math.round(d * M_PER_UNIT);
+    };
     const steps = [{ mark: 'start', text: `Start at ${placeLabel(from)}, head ${cardinal(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1])}`, dist: legM(0) }];
-    for (let i = 1; i < pts.length - 1; i++) {
+    controls.forEach((i, n) => {
       const d1 = [pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]];
       const d2 = [pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]];
       const cross = d1[0] * d2[1] - d1[1] * d2[0];
@@ -234,8 +263,8 @@
       const verb = ang < 35 ? `Bear ${side}` : ang > 140 ? `Turn sharp ${side}` : `Turn ${side}`;
       const f = nearestFeature(pts[i], [from, to]);
       const by = f ? (f.kind === 'booth' ? ` by booth ${f.num}` : ` by ${placeLabel(f)}`) : '';
-      steps.push({ mark: 'control', num: i, text: verb + by, dist: legM(i) });
-    }
+      steps.push({ mark: 'control', num: n + 1, text: verb + by, dist: legM(n + 1) });
+    });
     const last = pts[pts.length - 1], prev = pts[pts.length - 2];
     const [cx, cy] = to.anchor;
     const cross = (last[0] - prev[0]) * (cy - last[1]) - (last[1] - prev[1]) * (cx - last[0]);
@@ -273,7 +302,7 @@
   entrances.forEach(([a, b]) => el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], class: 'entrance' }, base));
 
   const labelLayer = el('g', {}, svg);
-  const boothLabels = booths.map((b) => {
+  booths.forEach((b) => {
     const t = el('text', { x: b.labelAt[0], y: b.labelAt[1], class: 'booth-label' }, labelLayer);
     t.textContent = b.num;
     b.labelNode = t;
@@ -303,7 +332,20 @@
     const bw = box[2] - box[0], bh = box[3] - box[1];
     const s = Math.max(bw / W, bh / avail);
     const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
-    return [cx - (W * s) / 2, cy - (T + avail / 2) * s, W * s, H * s];
+    let x0 = cx - (W * s) / 2, y0 = cy - (T + avail / 2) * s;
+    // Slide toward the floor so the view isn't half blank paper, while the
+    // box stays inside the uncovered part of the screen.
+    const F = [FLOOR[0] - 8, FLOOR[1] - 8, FLOOR[2] + 8, FLOOR[3] + 8];
+    const slide = (lo, size, f0, f1, b0, b1) => {
+      let d = 0;
+      if (size >= f1 - f0) d = (f0 + f1) / 2 - (lo + size / 2);
+      else if (lo < f0) d = f0 - lo;
+      else if (lo + size > f1) d = f1 - (lo + size);
+      return Math.max(b1 - (lo + size), Math.min(b0 - lo, d));
+    };
+    x0 += slide(x0, W * s, F[0], F[2], box[0], box[2]);
+    y0 += slide(y0 + T * s, avail * s, F[1], F[3], box[1], box[3]);
+    return [x0, y0, W * s, H * s];
   }
 
   function boxAround(points, pad, min) {
@@ -326,9 +368,10 @@
 
   function sizeText() {
     const u = unit();
-    const boothSize = 10 * u;
-    svg.style.setProperty('--booth-font', `${Math.min(3.4, boothSize)}px`);
-    boothLabels.forEach((t) => t.classList.toggle('hidden', boothSize > 4.2));
+    // Booth numbers stay about 10px on screen; a label shows only where it fits its booth.
+    const font = 10 * u;
+    svg.style.setProperty('--booth-font', `${font}px`);
+    booths.forEach((b) => b.labelNode.classList.toggle('hidden', font * 1.7 > b.fit));
     svg.style.setProperty('--area-font', `${12 * u}px`);
     svg.style.setProperty('--u', u);
   }
@@ -343,50 +386,51 @@
     const u = unit();
     const p = r.pts;
     const R = { start: 13 * u, control: 10 * u, finish: 12 * u };
-    const radius = (i) => (i === 0 ? R.start : i === p.length - 1 ? R.finish : R.control);
-    const segs = [];
-    for (let i = 0; i < p.length - 1; i++) {
-      const [ax, ay] = p[i], [bx, by] = p[i + 1];
-      const len = Math.hypot(bx - ax, by - ay);
-      const ra = radius(i) + 2 * u, rb = radius(i + 1) + 2 * u;
-      if (len <= ra + rb) { segs.push(null); continue; }
-      const ux = (bx - ax) / len, uy = (by - ay) / len;
-      segs.push(el('line', { x1: ax + ux * ra, y1: ay + uy * ra, x2: bx - ux * rb, y2: by - uy * rb, class: 'course' }, courseLayer));
-    }
+    const gap = 2.5 * u;
+
+    // One continuous course line, cut open where it passes through a symbol.
+    const cut = el('mask', { id: 'course-cut', maskUnits: 'userSpaceOnUse', x: view[0], y: view[1], width: view[2], height: view[3] }, courseLayer);
+    el('rect', { x: view[0], y: view[1], width: view[2], height: view[3], fill: '#fff' }, cut);
+    const hole = (x, y, rad) => el('circle', { cx: x, cy: y, r: rad + gap, fill: '#000' }, cut);
+    hole(...p[0], R.start);
+    r.controls.forEach((i) => hole(...p[i], R.control));
+    hole(...p[p.length - 1], R.finish);
+    const line = el('polyline', { points: p.map((q) => q.join(',')).join(' '), class: 'course', mask: 'url(#course-cut)' }, courseLayer);
+
     const [sx, sy] = p[0];
     const next = p[1] || [sx + 1, sy];
     const a = Math.atan2(next[1] - sy, next[0] - sx);
     const tri = [0, 2.094, 4.189].map((o) => `${sx + Math.cos(a + o) * R.start},${sy + Math.sin(a + o) * R.start}`).join(' ');
-    const marks = [[el('polygon', { points: tri, class: 'course-mark' }, courseLayer)]];
-    for (let i = 1; i < p.length - 1; i++) {
-      const c = el('circle', { cx: p[i][0], cy: p[i][1], r: R.control, class: 'course-mark' }, courseLayer);
-      const n = el('text', { x: p[i][0] + R.control * 1.15, y: p[i][1] - R.control * 1.05, class: 'course-num course-mark' }, courseLayer);
-      n.textContent = i;
-      marks.push([c, n]);
-    }
+    el('polygon', { points: tri, class: 'course-mark' }, courseLayer);
+    const along = [0];
+    for (let i = 1; i < p.length; i++) along.push(along[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
+    const marks = [];
+    r.controls.forEach((i, n) => {
+      const [cx, cy] = p[i];
+      // Put the number on the outside of the turn, away from both legs.
+      const d1 = Math.atan2(p[i - 1][1] - cy, p[i - 1][0] - cx), d2 = Math.atan2(p[i + 1][1] - cy, p[i + 1][0] - cx);
+      let mid = (d1 + d2) / 2;
+      if (Math.abs(d1 - d2) < Math.PI) mid += Math.PI;
+      const c = el('circle', { cx, cy, r: R.control, class: 'course-mark' }, courseLayer);
+      const t = el('text', { x: cx + Math.cos(mid) * R.control * 2, y: cy + Math.sin(mid) * R.control * 2, class: 'course-num course-mark' }, courseLayer);
+      t.textContent = n + 1;
+      marks.push([[c, t], along[i]]);
+    });
     const [fx, fy] = p[p.length - 1];
     const fin = el('g', { class: 'course-mark' }, courseLayer);
     el('circle', { cx: fx, cy: fy, r: R.finish, class: 'course-ring' }, fin);
     el('circle', { cx: fx, cy: fy, r: R.finish * 0.58, class: 'course-ring' }, fin);
-    marks.push([fin]);
+    marks.push([[fin], along[along.length - 1]]);
     el('circle', { cx: sx, cy: sy, r: 3.6 * u, class: 'here' }, courseLayer);
 
-    const drawn = segs.filter(Boolean);
-    if (!animate || still || reduceMotion.matches || !drawn.length) return;
+    const total = along[along.length - 1];
+    if (!animate || still || reduceMotion.matches || !total) return;
     svg.classList.add('drawing');
-    const total = drawn.reduce((s, l) => s + l.getTotalLength(), 0);
     const duration = Math.min(1400, 500 + (total / u) * 0.9);
-    let t0 = 0;
-    segs.forEach((l, i) => {
-      if (l) {
-        const len = l.getTotalLength();
-        const d = (len / total) * duration;
-        l.style.strokeDasharray = `${len} ${len}`;
-        l.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: d, delay: t0, easing: 'linear', fill: 'backwards' });
-        t0 += d;
-      }
-      (marks[i + 1] || []).forEach((m) => (m.style.animationDelay = `${Math.round(t0)}ms`));
-    });
+    const len = line.getTotalLength();
+    line.style.strokeDasharray = `${len} ${len}`;
+    line.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration, easing: 'linear', fill: 'backwards' });
+    marks.forEach(([nodes, at]) => nodes.forEach((m) => (m.style.animationDelay = `${Math.round((at / total) * duration)}ms`)));
   }
 
   function drawHere(p) {
@@ -598,7 +642,7 @@
       booths.forEach((b) => { if (b.node) b.node.classList.remove('target'); });
       view = wholeFloor
         ? frame([FLOOR[0] - 4, FLOOR[1] - 4, FLOOR[2] + 4, FLOOR[3] + 10])
-        : frame(boxAround([from.anchor], 70, 170));
+        : frame(boxAround([from.anchor], 70, 240));
       svg.setAttribute('viewBox', view.join(' '));
       sizeText();
       drawHere(from.anchor);
