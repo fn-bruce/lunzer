@@ -127,6 +127,12 @@
       out.push(path[j]);
       i = j;
     }
+    // Merge turn points that sit almost on top of each other.
+    for (let k = 1; k < out.length - 1; ) {
+      const a = out[k - 1], b = out[k];
+      if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 4.5 && lineClear(a, out[k + 1], o)) out.splice(k, 1);
+      else k++;
+    }
     return out;
   }
 
@@ -284,29 +290,33 @@
   // ---------- View ----------
   let view = [FLOOR[0] - 8, FLOOR[1] - 8, FLOOR[2] - FLOOR[0] + 16, FLOOR[3] - FLOOR[1] + 16];
   let wholeFloor = false;
-  const aspect = () => { const r = svg.getBoundingClientRect(); return r.width && r.height ? r.width / r.height : 0.9; };
+  const topBar = document.querySelector('.top');
+  const sheet = document.querySelector('.sheet');
 
+  // Fit a box into the part of the map not covered by the top bar and the bottom sheet.
   function frame(box) {
-    let [x0, y0, x1, y1] = box;
-    let w = x1 - x0, h = y1 - y0;
-    const a = aspect();
-    if (w / h < a) w = h * a; else h = w / a;
-    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    return [cx - w / 2, cy - h / 2, w, h];
+    const r = svg.getBoundingClientRect();
+    const W = r.width || 390, H = r.height || 700;
+    const T = topBar.getBoundingClientRect().bottom - r.top + 8;
+    const B = r.bottom - sheet.getBoundingClientRect().top + 8;
+    const avail = Math.max(120, H - T - B);
+    const bw = box[2] - box[0], bh = box[3] - box[1];
+    const s = Math.max(bw / W, bh / avail);
+    const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
+    return [cx - (W * s) / 2, cy - (T + avail / 2) * s, W * s, H * s];
   }
 
-  function setView(r) {
-    if (wholeFloor || !r) {
-      view = frame([FLOOR[0] - 8, FLOOR[1] - 8, FLOOR[2] + 8, FLOOR[3] + 14]);
-    } else {
-      const rx = r.pts.map((p) => p[0]), ry = r.pts.map((p) => p[1]);
-      const pad = 22, min = 120;
-      let box = [Math.min(...rx) - pad, Math.min(...ry) - pad, Math.max(...rx) + pad, Math.max(...ry) + pad];
-      const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
-      if (box[2] - box[0] < min) { box[0] = cx - min / 2; box[2] = cx + min / 2; }
-      if (box[3] - box[1] < min) { box[1] = cy - min / 2; box[3] = cy + min / 2; }
-      view = frame(box);
-    }
+  function boxAround(points, pad, min) {
+    const xs2 = points.map((p) => p[0]), ys2 = points.map((p) => p[1]);
+    const box = [Math.min(...xs2) - pad, Math.min(...ys2) - pad, Math.max(...xs2) + pad, Math.max(...ys2) + pad];
+    const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
+    if (box[2] - box[0] < min) { box[0] = cx - min / 2; box[2] = cx + min / 2; }
+    if (box[3] - box[1] < min) { box[1] = cy - min / 2; box[3] = cy + min / 2; }
+    return box;
+  }
+
+  function setView(points) {
+    view = wholeFloor || !points ? frame([FLOOR[0] - 4, FLOOR[1] - 4, FLOOR[2] + 4, FLOOR[3] + 10]) : frame(boxAround(points, 22, 110));
     svg.setAttribute('viewBox', view.join(' '));
     sizeText();
   }
@@ -317,9 +327,8 @@
   function sizeText() {
     const u = unit();
     const boothSize = 10 * u;
-    const showBooths = boothSize <= 4.2;
     svg.style.setProperty('--booth-font', `${Math.min(3.4, boothSize)}px`);
-    boothLabels.forEach((t) => t.classList.toggle('hidden', !showBooths));
+    boothLabels.forEach((t) => t.classList.toggle('hidden', boothSize > 4.2));
     svg.style.setProperty('--area-font', `${12 * u}px`);
     svg.style.setProperty('--u', u);
   }
@@ -378,6 +387,13 @@
       }
       (marks[i + 1] || []).forEach((m) => (m.style.animationDelay = `${Math.round(t0)}ms`));
     });
+  }
+
+  function drawHere(p) {
+    courseLayer.replaceChildren();
+    const u = unit();
+    el('circle', { cx: p[0], cy: p[1], r: 11 * u, class: 'here-ring' }, courseLayer);
+    el('circle', { cx: p[0], cy: p[1], r: 4.5 * u, class: 'here' }, courseLayer);
   }
 
   function applyFocus(r, from, to, on) {
@@ -528,27 +544,43 @@
   const form = document.getElementById('route-form');
   const errorBox = document.getElementById('form-error');
   const wheelchair = document.getElementById('wheelchair');
-  const noStairs = document.getElementById('nostairs');
-  const focus = document.getElementById('focus');
   const zoomBtn = document.getElementById('zoom-toggle');
+  const panel = document.getElementById('route-panel');
   const summary = document.getElementById('route-summary');
+  const stepsToggle = document.getElementById('steps-toggle');
   const stepsList = document.getElementById('steps');
+  const clearTo = document.getElementById('clear-to');
 
   const pick = (ids) => ids.map((id) => entries.find((e) => e.place.id === id)).filter(Boolean);
   const fromBox = combobox(fromInput, document.getElementById('from-list'), ['booth', 'landmark'], () =>
-    pick(['main-entrance', 'coffee-h1', 'meal-ab', 'demo-theater', 'pavilion', 'network-nook', 'corner-store', 'entrance-h2']));
-  const toBox = combobox(toInput, document.getElementById('to-list'), ['booth'], () => pick(['b365', 'b115', 'b116', 'b122', 'b117', 'b152', 'b214', 'b100']));
+    pick(['main-entrance', 'entrance-h2', 'entrance-h1', 'coffee-h1', 'meal-ab', 'demo-theater', 'pavilion', 'corner-store']));
+  const toBox = combobox(toInput, document.getElementById('to-list'), ['booth', 'landmark'], () =>
+    pick(['b365', 'demo-theater', 'pavilion', 'cn-theater', 'network-nook', 'b115', 'b116', 'b122']));
 
-  // Shareable links: ?from=coffee&to=datadog
+  // QR codes at booths open /?at=<booth or place>; links can also carry &to=<destination>.
   const params = new URLSearchParams(location.search);
-  const startQ = params.get('from') && search(params.get('from'), ['booth', 'landmark'])[0];
-  const endQ = params.get('to') && search(params.get('to'), ['booth'])[0];
-  fromBox.set(startQ ? startQ.place : places.find((p) => p.id === 'main-entrance'));
-  toBox.set(endQ ? endQ.place : places.find((p) => p.id === 'b365'));
+  const findPlace = (q, kinds) => {
+    if (!q) return null;
+    const exact = places.find((p) => p.kind === 'booth' && String(p.num) === q.trim()) || places.find((p) => p.id === q.trim());
+    return exact || (search(q, kinds)[0] || {}).place || null;
+  };
+  let from = findPlace(params.get('at') || params.get('from'), ['booth', 'landmark']) || places.find((p) => p.id === 'main-entrance');
+  let to = findPlace(params.get('to'), ['booth', 'landmark']);
+  fromBox.set(from);
+  if (to) toBox.set(to);
 
-  const opts = () => ({ wheelchair: wheelchair.checked, noStairs: wheelchair.checked || noStairs.checked });
+  const opts = () => ({ wheelchair: wheelchair.checked });
   const symbol = (id) => `<svg aria-hidden="true"><use href="#sym-${id}"/></svg>`;
   let current = null;
+
+  const placeId = (p) => (p.kind === 'booth' ? String(p.num) : p.id);
+  function syncUrl() {
+    const q = new URLSearchParams();
+    q.set('at', placeId(from));
+    if (to) q.set('to', placeId(to));
+    if (params.has('still')) q.set('still', '');
+    history.replaceState(null, '', `?${q.toString().replace(/=(&|$)/g, '$1')}`);
+  }
 
   function showError(msg, input) {
     errorBox.textContent = msg;
@@ -557,24 +589,47 @@
   }
 
   function render(animate) {
-    if (!current) return;
-    setView(current.r);
-    drawCourse(current.r, animate);
-    applyFocus(current.r, current.from, current.to, focus.checked);
+    if (current) {
+      setView(current.r.pts);
+      drawCourse(current.r, animate);
+      applyFocus(current.r, current.from, current.to, true);
+    } else {
+      svg.classList.remove('focused');
+      booths.forEach((b) => { if (b.node) b.node.classList.remove('target'); });
+      view = wholeFloor
+        ? frame([FLOOR[0] - 4, FLOOR[1] - 4, FLOOR[2] + 4, FLOOR[3] + 10])
+        : frame(boxAround([from.anchor], 70, 170));
+      svg.setAttribute('viewBox', view.join(' '));
+      sizeText();
+      drawHere(from.anchor);
+    }
+  }
+
+  function clearRoute() {
+    current = null;
+    to = null;
+    panel.hidden = true;
+    clearTo.hidden = true;
+    errorBox.hidden = true;
+    syncUrl();
+    render(false);
   }
 
   function run(animate = true) {
     errorBox.hidden = true;
     fromInput.removeAttribute('aria-invalid');
     toInput.removeAttribute('aria-invalid');
-    const from = fromBox.resolve();
-    const to = toBox.resolve();
-    if (!from) return showError(`Nothing matches "${fromInput.value.trim()}". Try a booth number, an exhibitor or a landmark like "coffee".`, fromInput);
-    if (!to) return showError(`Nothing matches "${toInput.value.trim()}". Try an exhibitor name or a booth number.`, toInput);
+    from = fromBox.resolve();
+    if (!from) return showError(`Nothing matches "${fromInput.value.trim()}". Try a booth number or a landmark like "coffee".`, fromInput);
+    if (!toInput.value.trim()) { clearRoute(); return; }
+    to = toBox.resolve();
+    if (!to) return showError(`Nothing matches "${toInput.value.trim()}". Try an exhibitor, a booth number or a room like "demo theater".`, toInput);
+    clearTo.hidden = false;
     const o = opts();
     const r = route(from, to, o);
     if (!r) return showError(`No ${o.wheelchair ? 'wheelchair ' : ''}route reaches ${placeLabel(to)} on this map.`);
     current = { r, from, to };
+    syncUrl();
 
     stepsList.replaceChildren();
     directions(r, from, to).forEach((s) => {
@@ -594,37 +649,44 @@
     });
 
     const mins = Math.max(1, Math.round(r.metres / 72));
-    summary.replaceChildren(`${r.metres} m · ${mins} min`);
-    const note = document.createElement('span');
-    note.className = 'alt';
+    summary.replaceChildren(`${r.metres} m · ${mins} min walk`);
     if (o.wheelchair) {
       const std = route(from, to, { wheelchair: false });
-      note.textContent = std && std.metres !== r.metres ? ` · Standard ${std.metres} m` : ' · Wide aisles';
-    } else {
-      note.textContent = ' · Step-free';
+      const alt = document.createElement('span');
+      alt.className = 'alt';
+      alt.textContent = std && std.metres !== r.metres ? ` · wide aisles (+${r.metres - std.metres} m)` : ' · wide aisles';
+      summary.append(alt);
     }
-    summary.append(note);
+    const dest = document.createElement('span');
+    dest.className = 'dest';
+    dest.textContent = `To ${placeLabel(to)}`;
+    summary.append(dest);
+    panel.hidden = false;
     render(animate);
   }
 
-  form.addEventListener('submit', (e) => { e.preventDefault(); run(true); });
-  fromInput.addEventListener('chosen', () => toInput.value && run(true));
-  toInput.addEventListener('chosen', () => fromInput.value && run(true));
-  wheelchair.addEventListener('change', () => {
-    noStairs.disabled = wheelchair.checked;
-    if (wheelchair.checked) noStairs.checked = true;
-    run(true);
+  form.addEventListener('submit', (e) => { e.preventDefault(); toInput.blur(); run(true); });
+  toInput.addEventListener('chosen', () => { toInput.blur(); run(true); });
+  fromInput.addEventListener('chosen', () => { fromInput.blur(); if (toInput.value.trim()) run(true); else { from = fromBox.resolve(); syncUrl(); render(false); } });
+  wheelchair.addEventListener('change', () => current && run(true));
+  clearTo.addEventListener('click', () => { toInput.value = ''; clearRoute(); toInput.focus(); });
+  stepsToggle.addEventListener('click', () => {
+    const open = stepsList.hidden;
+    stepsList.hidden = !open;
+    stepsToggle.setAttribute('aria-expanded', String(open));
+    stepsToggle.textContent = open ? 'Hide steps' : 'Steps';
+    render(false);
   });
-  noStairs.addEventListener('change', () => run(true));
-  focus.addEventListener('change', () => current && applyFocus(current.r, current.from, current.to, focus.checked));
   zoomBtn.addEventListener('click', () => {
     wholeFloor = !wholeFloor;
-    zoomBtn.textContent = wholeFloor ? 'Zoom to route' : 'Whole floor';
+    zoomBtn.textContent = wholeFloor ? 'Zoom in' : 'Whole floor';
     zoomBtn.setAttribute('aria-pressed', String(wholeFloor));
     render(false);
   });
+  // Tap a booth to go there.
+  booths.forEach((b) => b.node && b.node.addEventListener('click', () => { toBox.set(b); run(true); }));
   let resizeTimer;
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => render(false), 150); });
 
-  run(true);
+  if (to) run(true); else render(false);
 })();

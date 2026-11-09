@@ -31,8 +31,9 @@ Used on a phone, in a crowded and noisy exhibit hall, while walking, often one-h
 
 ## Capabilities and Constraints
 
-- Proof of concept for the Cloud Native Hackathon (2026-11-09). Current scope: a pitch page with a small working demo map using sample floor-plan data.
-- Not yet built: Elasticsearch search, Bluetooth positioning, live navigation, real venue data, shuttle legs.
+- Proof of concept for the Cloud Native Hackathon (2026-11-09). Current scope: a full-screen map of the KubeCon + CloudNativeCon NA 2026 expo floor (converted from the public expo map PDF, `tools/venue/`) with a bottom search bar for an exhibitor, booth or room.
+- Start position comes from a QR code at a booth: it opens `/?at=<booth number or place id>`. `&to=<destination>` pre-fills the destination.
+- Not yet built: printed QR codes, Elasticsearch search, Bluetooth positioning, live navigation, multi-floor venues, shuttle legs.
 - Server must keep listening on `$PORT` and keep `/healthz` and `/readyz`.
 
 ## Brand Commitments
