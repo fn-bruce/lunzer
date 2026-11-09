@@ -32,7 +32,15 @@ const indexHtml = fs
   .replaceAll('{{VERSION}}', escapeHtml(version))
   .replaceAll('{{TEAM}}', escapeHtml(team));
 
+// Sent on every response; writeHead merges them with its own headers.
+const securityHeaders = {
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'x-frame-options': 'DENY',
+};
+
 const server = http.createServer((req, res) => {
+  for (const [name, value] of Object.entries(securityHeaders)) res.setHeader(name, value);
   let url;
   try {
     url = new URL(req.url, 'http://localhost');
