@@ -11,4 +11,4 @@ resources:
 images:
   - name: app
     newName: ghcr.io/fn-bruce/lunzer
-    newTag: 73e897a
+    newTag: 1be63ff
