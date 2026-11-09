@@ -42,8 +42,8 @@
       </a>
       <div class="here-chip">
         <svg class="sym" aria-hidden="true"><use href="#sym-start"/></svg>
-        <label for="from-input" class="visually-hidden">You are near</label>
         <div class="combo combo-down">
+          <label for="from-input" class="field-label">You are here</label>
           <input id="from-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="from-list" placeholder="Where are you?" spellcheck="false">
           <ul id="from-list" class="combo-list" role="listbox" hidden></ul>
         </div>
@@ -64,13 +64,13 @@
         <label for="to-input" class="visually-hidden">Take me to</label>
         <div class="combo combo-up">
           <svg class="sym sym-in" aria-hidden="true"><use href="#sym-search"/></svg>
-          <input id="to-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="to-list" placeholder="Exhibitor, booth or room" spellcheck="false" enterkeyhint="go">
+          <input id="to-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="to-list" placeholder="Where to?" spellcheck="false" enterkeyhint="go">
           <button type="button" id="clear-to" class="btn-icon" aria-label="Clear destination" hidden><svg aria-hidden="true"><use href="#sym-close"/></svg></button>
           <ul id="to-list" class="combo-list" role="listbox" hidden></ul>
         </div>
         <label class="chip"><input type="checkbox" id="wheelchair"><span>Wheelchair</span></label>
       </form>
-      <p class="source">Map from the public KubeCon + CloudNativeCon NA 2026 expo floor plan · positions approximate · not affiliated · team {{TEAM}} · <code>{{VERSION}}</code></p>
+      <p class="source">Map from the public KubeCon + CloudNativeCon NA 2026 floor plan · approximate · not affiliated · team {{TEAM}} · <code>{{VERSION}}</code></p>
     </section>
   </main>
 
