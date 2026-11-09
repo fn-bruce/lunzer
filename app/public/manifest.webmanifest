@@ -1,0 +1,12 @@
+{
+  "name": "Lunzer",
+  "short_name": "Lunzer",
+  "description": "Booth-to-booth directions inside a conference hall, stair-free when you need it.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

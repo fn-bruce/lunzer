@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lunzer · Expo floor</title>
+  <meta name="description" content="Scan the code at a booth, search for where you want to go, and Lunzer draws the walking route across the expo floor.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <link rel="preload" href="/fonts/barlow-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="sym-start" viewBox="0 0 24 24"><path d="M12 3 21.5 20h-19Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+      <symbol id="sym-control" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.2"/></symbol>
+      <symbol id="sym-finish" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="sym-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+      <symbol id="sym-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    </defs>
+  </svg>
+
+  <main class="app">
+    <h1 class="visually-hidden">Lunzer expo floor map</h1>
+    <svg id="map" class="map" role="img" aria-labelledby="map-label" preserveAspectRatio="xMidYMid meet">
+      <title id="map-label">Expo floor map</title>
+    </svg>
+
+    <header class="top">
+      <a class="wordmark" href="/" aria-label="Lunzer, reset map">
+        <svg class="wordmark-course" viewBox="0 0 64 20" aria-hidden="true">
+          <path d="M7 3 13 15H1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M15 10h32" stroke="var(--course)" stroke-width="2.4"/>
+          <circle cx="55" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="2"/>
+          <circle cx="55" cy="10" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span>Lunzer</span>
+      </a>
+      <div class="here-chip">
+        <svg class="sym" aria-hidden="true"><use href="#sym-start"/></svg>
+        <label for="from-input" class="visually-hidden">You are near</label>
+        <div class="combo combo-down">
+          <input id="from-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="from-list" placeholder="Where are you?" spellcheck="false">
+          <ul id="from-list" class="combo-list" role="listbox" hidden></ul>
+        </div>
+      </div>
+      <button type="button" id="zoom-toggle" class="btn-ghost" aria-pressed="false">Whole floor</button>
+    </header>
+
+    <section class="sheet" aria-label="Find a destination">
+      <div id="route-panel" class="route-panel" hidden>
+        <div class="route-head">
+          <p id="route-summary" class="route-summary" aria-live="polite"></p>
+          <button type="button" id="steps-toggle" class="btn-text" aria-expanded="false" aria-controls="steps">Steps</button>
+        </div>
+        <ol id="steps" class="steps" hidden></ol>
+      </div>
+      <p id="form-error" class="form-error" role="alert" hidden></p>
+      <form id="route-form" class="search" autocomplete="off" novalidate>
+        <label for="to-input" class="visually-hidden">Take me to</label>
+        <div class="combo combo-up">
+          <svg class="sym sym-in" aria-hidden="true"><use href="#sym-search"/></svg>
+          <input id="to-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="to-list" placeholder="Exhibitor, booth or room" spellcheck="false" enterkeyhint="go">
+          <button type="button" id="clear-to" class="btn-icon" aria-label="Clear destination" hidden><svg aria-hidden="true"><use href="#sym-close"/></svg></button>
+          <ul id="to-list" class="combo-list" role="listbox" hidden></ul>
+        </div>
+        <label class="chip"><input type="checkbox" id="wheelchair"><span>Wheelchair</span></label>
+      </form>
+      <p class="source">Map from the public KubeCon + CloudNativeCon NA 2026 expo floor plan · positions approximate · not affiliated · team {{TEAM}} · <code>{{VERSION}}</code></p>
+    </section>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
